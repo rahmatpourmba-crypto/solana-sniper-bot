@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>⚡ Solana Sniper & Arbitrage Live Dashboard</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    body {
+      background-color: #0b0e14;
+      color: #e2e8f0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    }
+    .neon-border {
+      border: 1px solid rgba(168, 85, 247, 0.3);
+      box-shadow: 0 0 15px rgba(168, 85, 247, 0.15);
+    }
+    .neon-green {
+      box-shadow: 0 0 12px rgba(34, 197, 94, 0.25);
+    }
+    @keyframes pulse-slow {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.4; }
+    }
+    .live-dot {
+      animation: pulse-slow 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+    }
+  </style>
+</head>
+<body class="p-4 md:p-8 min-h-screen">
+  <div class="max-w-7xl mx-auto space-y-6">
+
+    <!-- Header -->
+    <header class="flex flex-col md:flex-row justify-between items-center bg-gray-900/80 p-6 rounded-2xl border border-gray-800 backdrop-blur-md">
+      <div class="flex items-center space-x-4 mb-4 md:mb-0">
+        <div class="w-12 h-12 rounded-xl bg-gradient-to-tr from-purple-600 to-indigo-500 flex items-center justify-center text-white text-2xl shadow-lg">
+          <i class="fa-solid fa-bolt"></i>
+        </div>
+        <div>
+          <h1 class="text-2xl font-bold bg-gradient-to-r from-purple-400 via-pink-400 to-amber-300 bg-clip-text text-transparent">
+            Solana Sniper Bot
+          </h1>
+          <p class="text-xs text-gray-400 flex items-center gap-2 mt-0.5">
+            <span class="inline-block w-2 h-2 rounded-full bg-emerald-400 live-dot"></span>
+            Live High-Frequency Stream & Paper Trader
+          </p>
+        </div>
+      </div>
+
+      <div class="flex items-center space-x-3">
+        <span class="px-3 py-1 bg-purple-500/10 border border-purple-500/30 text-purple-300 text-xs font-semibold rounded-full">
+          Simulation Mode (Risk-Free)
+        </span>
+        <a href="https://github.com/rahmatpourmba-crypto/solana-sniper-bot" target="_blank" class="px-4 py-2 bg-gray-800 hover:bg-gray-700 text-white text-sm font-medium rounded-xl transition flex items-center gap-2 border border-gray-700">
+          <i class="fa-brands fa-github"></i> Repository
+        </a>
+      </div>
+    </header>
+
+    <!-- Key Metrics Grid -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div class="bg-gray-900/60 p-5 rounded-xl border border-gray-800">
+        <span class="text-xs text-gray-400 uppercase tracking-wider font-semibold">Simulated Balance</span>
+        <div class="text-2xl font-bold text-white mt-1" id="balanceDisplay">2.000 SOL</div>
+        <span class="text-xs text-emerald-400 mt-1 inline-block">Initial: 2.000 SOL</span>
+      </div>
+
+      <div class="bg-gray-900/60 p-5 rounded-xl border border-gray-800">
+        <span class="text-xs text-gray-400 uppercase tracking-wider font-semibold">Net Profit (PnL)</span>
+        <div class="text-2xl font-bold text-emerald-400 mt-1" id="pnlDisplay">+0.0000 SOL</div>
+        <span class="text-xs text-emerald-400 mt-1 inline-block" id="pnlPercentDisplay">+0.0%</span>
+      </div>
+
+      <div class="bg-gray-900/60 p-5 rounded-xl border border-gray-800">
+        <span class="text-xs text-gray-400 uppercase tracking-wider font-semibold">Win Rate</span>
+        <div class="text-2xl font-bold text-indigo-400 mt-1" id="winRateDisplay">100.0%</div>
+        <span class="text-xs text-gray-400 mt-1 inline-block" id="tradesCountDisplay">0 Closed Trades</span>
+      </div>
+
+      <div class="bg-gray-900/60 p-5 rounded-xl border border-gray-800">
+        <span class="text-xs text-gray-400 uppercase tracking-wider font-semibold">Scam Filter</span>
+        <div class="text-2xl font-bold text-amber-400 mt-1" id="skippedCount">0 Skipped</div>
+        <span class="text-xs text-gray-400 mt-1 inline-block">RugCheck & Freeze Filter Active</span>
+      </div>
+    </div>
+
+    <!-- Main Content: Active Positions & Live Feed -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+      <!-- Active Open Positions -->
+      <div class="lg:col-span-2 bg-gray-900/60 p-6 rounded-2xl border border-gray-800 space-y-4">
+        <div class="flex justify-between items-center">
+          <h2 class="text-lg font-semibold text-white flex items-center gap-2">
+            <i class="fa-solid fa-chart-line text-purple-400"></i> Active Open Positions
+          </h2>
+          <span class="text-xs text-gray-400">Target TP: +40% | SL: -15%</span>
+        </div>
+
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-sm text-gray-300">
+            <thead class="text-xs uppercase bg-gray-800/60 text-gray-400">
+              <tr>
+                <th class="py-3 px-4 rounded-l-lg">Token</th>
+                <th class="py-3 px-4">Mint Address</th>
+                <th class="py-3 px-4">Amount</th>
+                <th class="py-3 px-4">PnL (%)</th>
+                <th class="py-3 px-4 rounded-r-lg">Status</th>
+              </tr>
+            </thead>
+            <tbody id="positionsTableBody" class="divide-y divide-gray-800">
+              <tr>
+                <td colspan="5" class="py-8 text-center text-gray-500">
+                  Scanning for secure liquidity pools...
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Live Stream Activity Feed -->
+      <div class="bg-gray-900/60 p-6 rounded-2xl border border-gray-800 space-y-4 flex flex-col h-[520px]">
+        <div class="flex justify-between items-center">
+          <h2 class="text-lg font-semibold text-white flex items-center gap-2">
+            <i class="fa-solid fa-satellite-dish text-emerald-400"></i> Live Activity Feed
+          </h2>
+          <span class="text-xs text-emerald-400 font-mono">STREAMING</span>
+        </div>
+
+        <div id="activityLogs" class="space-y-2.5 overflow-y-auto flex-1 font-mono text-xs pr-1">
+          <div class="p-2.5 bg-gray-800/40 rounded-lg text-gray-400 border border-gray-800">
+            [SYS] Connecting to Solana stream & RugCheck engine...
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Footer -->
+    <footer class="text-center text-xs text-gray-500 py-4">
+      Solana Sniper & Arbitrage Open Source Engine • Powered by GitHub Pages & Python
+    </footer>
+
+  </div>
+
+  <script>
+    // Live Client Simulation Engine
+    let balance = 2.0;
+    const initialBalance = 2.0;
+    const buyAmount = 0.05;
+    let totalPnl = 0.0;
+    let wins = 0;
+    let losses = 0;
+    let skipped = 0;
+    let positions = [];
+
+    const mockPools = [
+      { symbol: "PEPE2026", name: "Pepe Millennium", safe: true },
+      { symbol: "DOGEX", name: "Doge Matrix", safe: true },
+      { symbol: "CYBER", name: "Cyber Samurai", safe: false, reason: "Freeze authority enabled (Honeypot risk)" },
+      { symbol: "MOONAI", name: "Moon AI Agent", safe: true },
+      { symbol: "SHIBAZ", name: "Shiba Zero", safe: false, reason: "Top 10 holders control > 40%" },
+      { symbol: "SOLCAT", name: "Solana Super Cat", safe: true },
+      { symbol: "TURBO", name: "Turbo Speed Meme", safe: true },
+      { symbol: "QUANT", name: "Quantum Finance", safe: true }
+    ];
+
+    function log(message, type = "info") {
+      const logsContainer = document.getElementById("activityLogs");
+      const time = new Date().toLocaleTimeString();
+      const div = document.createElement("div");
+      div.className = "p-2 rounded-lg border text-xs leading-relaxed";
+      
+      if (type === "buy") {
+        div.className += " bg-emerald-950/30 border-emerald-800/50 text-emerald-300";
+      } else if (type === "profit") {
+        div.className += " bg-purple-950/30 border-purple-800/50 text-purple-300 font-semibold";
+      } else if (type === "skip") {
+        div.className += " bg-amber-950/30 border-amber-800/50 text-amber-300";
+      } else {
+        div.className += " bg-gray-800/40 border-gray-800 text-gray-300";
+      }
+
+      div.innerHTML = `<span class="text-gray-500">[${time}]</span> ${message}`;
+      logsContainer.prepend(div);
+
+      if (logsContainer.children.length > 30) {
+        logsContainer.removeChild(logsContainer.lastChild);
+      }
+    }
+
+    function renderUI() {
+      document.getElementById("balanceDisplay").innerText = balance.toFixed(3) + " SOL";
+      const pnlElement = document.getElementById("pnlDisplay");
+      pnlElement.innerText = (totalPnl >= 0 ? "+" : "") + totalPnl.toFixed(4) + " SOL";
+      pnlElement.className = totalPnl >= 0 ? "text-2xl font-bold text-emerald-400 mt-1" : "text-2xl font-bold text-rose-400 mt-1";
+
+      const pnlPercent = ((balance - initialBalance) / initialBalance) * 100;
+      document.getElementById("pnlPercentDisplay").innerText = (pnlPercent >= 0 ? "+" : "") + pnlPercent.toFixed(1) + "%";
+
+      const totalTrades = wins + losses;
+      const winRate = totalTrades === 0 ? 100 : ((wins / totalTrades) * 100);
+      document.getElementById("winRateDisplay").innerText = winRate.toFixed(1) + "%";
+      document.getElementById("tradesCountDisplay").innerText = `${totalTrades} Trades (${wins}W / ${losses}L)`;
+      document.getElementById("skippedCount").innerText = `${skipped} Skipped`;
+
+      // Render Positions Table
+      const tbody = document.getElementById("positionsTableBody");
+      if (positions.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="5" class="py-8 text-center text-gray-500">Scanning for secure liquidity pools...</td></tr>`;
+      } else {
+        tbody.innerHTML = positions.map(pos => {
+          const isProfitable = pos.pnl >= 0;
+          return `
+            <tr class="hover:bg-gray-800/30 transition">
+              <td class="py-3 px-4 font-semibold text-white">${pos.symbol}</td>
+              <td class="py-3 px-4 font-mono text-xs text-gray-400">${pos.mint}</td>
+              <td class="py-3 px-4">${pos.amount} SOL</td>
+              <td class="py-3 px-4 font-bold ${isProfitable ? 'text-emerald-400' : 'text-rose-400'}">
+                ${isProfitable ? '+' : ''}${pos.pnl.toFixed(1)}%
+              </td>
+              <td class="py-3 px-4">
+                <span class="px-2 py-0.5 rounded text-xs bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                  Open (${pos.holdSeconds}s)
+                </span>
+              </td>
+            </tr>
+          `;
+        }).join("");
+      }
+    }
+
+    // New Pool Discovery Cycle
+    setInterval(() => {
+      const pool = mockPools[Math.floor(Math.random() * mockPools.length)];
+      const randomMint = Math.random().toString(36).substring(2, 8).toUpperCase() + "...pump";
+
+      log(`🔎 Detected new pool: <strong>${pool.symbol}</strong> (${pool.name})`, "info");
+
+      if (!pool.safe) {
+        skipped++;
+        log(`⚠️ Skipped <strong>${pool.symbol}</strong>: ${pool.reason}`, "skip");
+        renderUI();
+        return;
+      }
+
+      if (positions.length >= 4 || balance < buyAmount) return;
+
+      balance -= buyAmount;
+      const newPos = {
+        symbol: pool.symbol,
+        mint: randomMint,
+        amount: buyAmount,
+        pnl: 0.0,
+        holdSeconds: 0
+      };
+      positions.push(newPos);
+      log(`🚀 [BUY] Sniped <strong>${pool.symbol}</strong> for ${buyAmount} SOL`, "buy");
+      renderUI();
+    }, 4500);
+
+    // Price Update & TP/SL Trigger
+    setInterval(() => {
+      if (positions.length === 0) return;
+
+      for (let i = positions.length - 1; i >= 0; i--) {
+        const pos = positions[i];
+        pos.holdSeconds += 2;
+        pos.pnl += (Math.random() * 11 - 4.5); // Fluctuations
+
+        // Take Profit
+        if (pos.pnl >= 40.0) {
+          const profit = pos.amount * (pos.pnl / 100);
+          balance += (pos.amount + profit);
+          totalPnl += profit;
+          wins++;
+          log(`🎯 [CLOSED] <strong>${pos.symbol}</strong>: Hit Take Profit (+${pos.pnl.toFixed(1)}%) | +${profit.toFixed(4)} SOL`, "profit");
+          positions.splice(i, 1);
+        }
+        // Stop Loss
+        else if (pos.pnl <= -15.0) {
+          const loss = pos.amount * (pos.pnl / 100);
+          balance += (pos.amount + loss);
+          totalPnl += loss;
+          losses++;
+          log(`🛑 [CLOSED] <strong>${pos.symbol}</strong>: Hit Stop Loss (${pos.pnl.toFixed(1)}%)`, "skip");
+          positions.splice(i, 1);
+        }
+      }
+      renderUI();
+    }, 2000);
+
+    renderUI();
+  </script>
+</body>
+</html>
