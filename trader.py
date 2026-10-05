@@ -1,5 +1,6 @@
 """
-Trading & Simulation Engine for Paper Trading & PnL tracking.
+Moonshot Trading & Trailing Stop Engine for Solana & Pump.fun.
+Tracks peak price multipliers and locks in multi-1000% gains at optimal peaks.
 """
 import time
 from typing import Dict, Any, List
@@ -13,6 +14,7 @@ class TradePosition:
         self.buy_price_sol = buy_price_sol
         self.amount_sol = amount_sol
         self.current_price_sol = buy_price_sol
+        self.peak_price_sol = buy_price_sol
         self.peak_pnl_percent = 0.0
         self.is_closed = False
         self.exit_reason = ""
@@ -24,27 +26,48 @@ class TradePosition:
             return 0.0
         return ((self.current_price_sol - self.buy_price_sol) / self.buy_price_sol) * 100.0
 
+    @property
+    def multiplier(self) -> float:
+        if self.buy_price_sol <= 0:
+            return 1.0
+        return self.current_price_sol / self.buy_price_sol
+
+    @property
+    def peak_multiplier(self) -> float:
+        if self.buy_price_sol <= 0:
+            return 1.0
+        return self.peak_price_sol / self.buy_price_sol
+
     def check_triggers(self, new_price_sol: float) -> tuple[bool, str]:
         """
-        بروزرسانی قیمت و بررسی حد سود یا ضرر.
-        خروجی: (آیا بسته شود؟ , دلیل)
+        بروزرسانی قیمت، تعقیب قله (Peak Tracking) و اجرای حد ضرر متحرک (Trailing Stop)
         """
         self.current_price_sol = new_price_sol
         pnl = self.current_pnl_percent
-        if pnl > self.peak_pnl_percent:
+
+        # ثبت بالاترین قله قیمتی که توکن تجربه کرده است
+        if new_price_sol > self.peak_price_sol:
+            self.peak_price_sol = new_price_sol
             self.peak_pnl_percent = pnl
 
-        # 1. حد سود (Take Profit)
-        if pnl >= config.TAKE_PROFIT_PERCENT:
-            return True, f"🎯 Take Profit (+{pnl:.1f}%)"
+        # 1. تارگت مون‌شات نجومی (+۲۰۰۰٪ یا ۲۰ برابر)
+        if pnl >= config.MOONSHOT_TP:
+            return True, f"🚀 MEGA MOONSHOT REACHED ({self.multiplier:.1f}x / +{pnl:.0f}%)"
 
-        # 2. حد ضرر (Stop Loss)
-        if pnl <= -config.STOP_LOSS_PERCENT:
+        # 2. حد ضرر متحرک (Trailing Stop Loss):
+        # اگر توکن حداقل ۲ برابر شد (+100%) و بعد از بالاترین قله‌اش ۲۰٪ ریخت، در اوج بفروش!
+        if self.peak_pnl_percent >= config.TIER1_TP:
+            drop_from_peak = ((self.peak_price_sol - self.current_price_sol) / self.peak_price_sol) * 100.0
+            if drop_from_peak >= config.TRAILING_STOP_PERCENT:
+                return True, f"🎯 TRAILING STOP LOCKED PROFIT ({self.multiplier:.1f}x / +{pnl:.0f}%) [Peak: {self.peak_multiplier:.1f}x]"
+
+        # 3. حد ضرر اولیه (اگر توکن از اول رشد نکرد و ریخت)
+        if pnl <= -config.STOP_LOSS_INITIAL:
             return True, f"🛑 Stop Loss ({pnl:.1f}%)"
 
-        # 3. تایم اوت نگهداری توکن (Timeout)
-        if (time.time() - self.entry_time) > config.MAX_HOLD_SECONDS:
-            return True, f"⏰ Timeout ({pnl:+.1f}%)"
+        # 4. نگهداری حداکثر ۵ دقیقه در صورت راکد ماندن
+        if (time.time() - self.entry_time) > 300 and pnl < 20.0:
+            return True, f"⏰ Stagnant Exit ({pnl:+.1f}%)"
 
         return False, ""
 
@@ -64,7 +87,6 @@ class PaperTradingEngine:
         self.losing_trades: int = 0
 
     def open_position(self, token_mint: str, symbol: str, initial_price: float = 0.0001) -> TradePosition:
-        """شبیه‌سازی خرید توکن جدید"""
         if self.balance_sol < config.BUY_AMOUNT_SOL:
             return None
 
