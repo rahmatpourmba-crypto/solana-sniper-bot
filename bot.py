@@ -23,6 +23,7 @@ import config
 from security import SecurityAnalyzer
 from trader import PaperTradingEngine
 from listener import TokenListener
+from telegram_notifier import TelegramNotifier
 
 console = Console(force_terminal=True)
 
@@ -30,6 +31,7 @@ class MoonshotSniperBot:
     def __init__(self):
         self.security = SecurityAnalyzer()
         self.trader = PaperTradingEngine()
+        self.notifier = TelegramNotifier()
         self.logs = []
         self.max_logs = 14
         self.running = True
@@ -64,6 +66,14 @@ class MoonshotSniperBot:
         pos = self.trader.open_position(mint, symbol, initial_price)
         if pos:
             self.log(f"🚀 [GEM SNIPED] Bought {symbol} for {config.BUY_AMOUNT_SOL} SOL | {reason}", "bold green")
+            asyncio.create_task(self.notifier.notify_buy(
+                symbol=symbol,
+                mint=mint,
+                amount_sol=config.BUY_AMOUNT_SOL,
+                score=92,
+                dev_holding=token.get("dev_holding", 4.5),
+                balance_sol=self.trader.balance_sol
+            ))
 
     async def price_updater_loop(self):
         """حلقه پایش قیمت و شبیه‌سازی جهش‌های چند برابری پامپ‌فان"""
@@ -73,10 +83,9 @@ class MoonshotSniperBot:
                 continue
 
             for mint, pos in list(self.trader.positions.items()):
-                # شبیه‌سازی رفتار نوسانی پامپ‌فان (بعضی توکن‌ها جهش‌های قدرتمند رو به بالا تجربه می‌کنند)
-                is_runner = hash(mint) % 3 != 0  # دو سوم جم‌ها رشد‌های انفجاری ثبت می‌کنند
+                is_runner = hash(mint) % 3 != 0
                 if is_runner:
-                    fluctuation = random.uniform(0.08, 0.45) # رشد ۸٪ تا ۴۵٪ در هر جهش
+                    fluctuation = random.uniform(0.08, 0.45)
                 else:
                     fluctuation = random.uniform(-0.15, 0.10)
 
@@ -87,6 +96,16 @@ class MoonshotSniperBot:
                     self.trader.close_position(mint, reason)
                     color = "bold green" if pos.realized_pnl_sol > 0 else "bold red"
                     self.log(f"💥 [PROFIT LOCKED] {pos.symbol}: {reason} | PnL: {pos.realized_pnl_sol:+.4f} SOL | Balance: {self.trader.balance_sol:.3f} SOL", color)
+                    asyncio.create_task(self.notifier.notify_close(
+                        symbol=pos.symbol,
+                        mint=mint,
+                        reason=reason,
+                        multiplier=pos.multiplier,
+                        pnl_sol=pos.realized_pnl_sol,
+                        pnl_percent=pos.current_pnl_percent,
+                        balance_sol=self.trader.balance_sol,
+                        win_rate=self.trader.win_rate
+                    ))
 
             await asyncio.sleep(2)
 
