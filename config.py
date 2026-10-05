@@ -26,8 +26,8 @@ MAX_DEV_HOLDING = 8.0         # حداکثر سهم مجاز سازنده (در�
 MIN_LIQUIDITY_USD = 1500.0    # حداقل نقدینگی اولیه
 
 # --- TELEGRAM NOTIFICATIONS (گزارش‌های ۲۴ ساعته خریدو فروش) ---
-TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN", "")
-TELEGRAM_CHAT_ID = os.getenv("TELEGRAM_CHAT_ID", "")
+TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN", "8886497499:AAH1crLMaaDDVhbrSPvTCVfhlJWQGKB9pno")
+TELEGRAM_CHAT_ID = os.getenv("TELEGRAM_CHAT_ID", "-1003954902967")
 
 # --- NETWORK & PROXY ---
 HTTP_PROXY = os.getenv("HTTP_PROXY", "http://127.0.0.1:10809")
