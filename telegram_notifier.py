@@ -1,5 +1,5 @@
 """
-Audited Telegram Notifier with Solscan & DexScreener deep links and retry logic.
+Halal Tech Telegram Notifier with Project Sector, Utility Badges, and Solscan Links.
 """
 import aiohttp
 import asyncio
@@ -13,7 +13,6 @@ class TelegramNotifier:
         self.enabled = bool(self.bot_token and self.chat_id)
 
     async def send_message(self, text: str) -> bool:
-        """ارسال پیام امن به تلگرام با مکانیزم تلاش مجدد (Retry)"""
         if not self.enabled:
             return False
 
@@ -37,37 +36,38 @@ class TelegramNotifier:
                 await asyncio.sleep(1)
         return False
 
-    async def notify_buy(self, symbol: str, mint: str, amount_sol: float, score: int, dev_holding: float, balance_sol: float):
-        """ارسال گزارش خرید هوشمند همراه با لینک‌های چارت و قرارداد"""
+    async def notify_buy(self, symbol: str, mint: str, amount_sol: float, score: int, dev_holding: float, balance_sol: float, sector: str):
+        """ارسال گزارش خرید توکن کاربردی با برچسب تایید شرعی و حوزه فناوری"""
         dex_link = f"https://dexscreener.com/solana/{mint}"
         solscan_link = f"https://solscan.io/token/{mint}"
 
         text = (
-            f"🚀 <b>[شکار جم تایید شده - خرید موفق]</b>\n"
+            f"💎 <b>[خرید موفق پروژه فناوری و هوش مصنوعی]</b>\n"
             f"━━━━━━━━━━━━━━━━━━━━\n"
-            f"🪙 <b>توکن:</b> ${symbol}\n"
+            f"🏷 <b>حوزه کاربردی:</b> {sector}\n"
+            f"🪙 <b>نماد توکن:</b> ${symbol}\n"
             f"🔑 <b>آدرس قرارداد:</b> <code>{mint}</code>\n"
             f"💰 <b>حجم ورود:</b> {amount_sol} SOL (~0.50$)\n"
-            f"🛡 <b>سهم سازنده:</b> {dev_holding:.1f}% (زیر ۵٪ - بدون ریسک دامپ)\n"
-            f"🌟 <b>نمره امنیتی:</b> {score}/100\n"
+            f"🛡 <b>سهم سازنده:</b> {dev_holding:.1f}% (بدون ریسک دامپ)\n"
+            f"🌟 <b>نمره اعتبار:</b> {score}/100\n"
             f"💵 <b>موجودی حساب:</b> {balance_sol:.3f} SOL\n"
             f"━━━━━━━━━━━━━━━━━━━━\n"
-            f"📊 <a href='{dex_link}'>مشاهده چارت DexScreener</a> | <a href='{solscan_link}'>بررسی در Solscan</a>"
+            f"📊 <a href='{dex_link}'>چارت DexScreener</a> | <a href='{solscan_link}'>کاوشگر Solscan</a>"
         )
         await self.send_message(text)
 
     async def notify_close(self, symbol: str, mint: str, reason: str, multiplier: float, pnl_sol: float, pnl_percent: float, balance_sol: float, win_rate: float):
-        """ارسال گزارش خروج در قله و سیو سود"""
+        """ارسال گزارش خروج و سیو سود در قله"""
         is_profit = pnl_sol > 0
         icon = "🎯" if is_profit else "🛑"
-        result_title = "سود قفل شد" if is_profit else "خروج با استاپ‌لاس اضطراری"
+        result_title = "سود محقق شد (حلال)" if is_profit else "خروج اضطراری (Stop Loss)"
         dex_link = f"https://dexscreener.com/solana/{mint}"
 
         text = (
             f"{icon} <b>[{result_title}]</b>\n"
             f"━━━━━━━━━━━━━━━━━━━━\n"
             f"🪙 <b>توکن:</b> ${symbol}\n"
-            f"📈 <b>ضریب خروج:</b> <b>{multiplier:.1f}x</b> ({pnl_percent:+.1f}%)\n"
+            f"📈 <b>ضریب رشد:</b> <b>{multiplier:.1f}x</b> ({pnl_percent:+.1f}%)\n"
             f"💵 <b>سود خالص معامله:</b> {pnl_sol:+.4f} SOL\n"
             f"🏆 <b>موجودی جدید:</b> {balance_sol:.3f} SOL\n"
             f"📊 <b>درصد برد کل:</b> {win_rate:.1f}%\n"
