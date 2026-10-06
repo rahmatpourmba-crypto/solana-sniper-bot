@@ -24,6 +24,10 @@ class TradePosition:
         self.is_closed = False
         self.exit_reason = ""
         self.realized_pnl_sol = 0.0
+        self.token_amount_raw = 0          # actual token balance (live mode)
+        self.sell_failures = 0             # consecutive failed sell attempts
+        self.entry_signature = None        # on-chain signature of the buy (live mode)
+        self.dry_run = False               # built & signed but never broadcast
 
     @property
     def current_pnl_percent(self) -> float:
@@ -65,9 +69,9 @@ class TradePosition:
             if drop_from_peak >= config.TRAILING_STOP_PERCENT:
                 return True, f"🎯 TRAILING STOP LOCKED PROFIT ({self.multiplier:.1f}x / +{pnl:.0f}%) [Peak: {self.peak_multiplier:.1f}x]"
 
-        # ۴. حفاظت بریک‌ایون: پوزیشن سودده هرگز با ضرر بسته نمی‌شود
-        if self.is_breakeven_locked and pnl <= 10.0:
-            return True, f"🛡️ BREAKEVEN SAVED PROFIT (+{pnl:.1f}% - Zero Risk Lock)"
+        # ۴. حفاظت بریک‌ایون: پوزیشن سودده با ضرر بسته نمی‌شود و کف سود قفل‌شده را نگه می‌دارد
+        if self.is_breakeven_locked and pnl <= config.LOCKED_PROFIT_FLOOR_PERCENT:
+            return True, f"🛡️ BREAKEVEN LOCKED PROFIT (+{pnl:.1f}% - Profit Floor)"
 
         # ۵. حد ضرر اولیه فشرده
         if not self.is_breakeven_locked and pnl <= -config.STOP_LOSS_INITIAL:
@@ -96,27 +100,50 @@ class PaperTradingEngine:
         self.losing_trades: int = 0
         self.recovered_rent_sol: float = 0.0
 
-    def open_position(self, token_mint: str, symbol: str, buy_price_usd: float, simulated: bool = False) -> TradePosition:
-        if self.balance_sol < (config.BUY_AMOUNT_SOL + config.MIN_SOL_RESERVE):
+    def open_position(
+        self,
+        token_mint: str,
+        symbol: str,
+        buy_price_usd: float,
+        simulated: bool = False,
+        cost_sol: float = None,
+        token_amount_raw: int = 0,
+    ) -> TradePosition:
+        # cost_sol=None → paper mode (fixed BUY_AMOUNT_SOL + reserve check)
+        if cost_sol is None:
+            cost_sol = config.BUY_AMOUNT_SOL
+            if self.balance_sol < (cost_sol + config.MIN_SOL_RESERVE):
+                return None
+        elif self.balance_sol < cost_sol:
             return None
 
-        self.balance_sol -= config.BUY_AMOUNT_SOL
+        self.balance_sol -= cost_sol
         pos = TradePosition(
             token_mint=token_mint,
             symbol=symbol,
             buy_price_usd=buy_price_usd,
-            amount_sol=config.BUY_AMOUNT_SOL,
+            amount_sol=cost_sol,
             simulated=simulated,
         )
+        pos.token_amount_raw = token_amount_raw
         self.positions[token_mint] = pos
         self.total_trades += 1
         return pos
 
-    def close_position(self, token_mint: str, reason: str):
+    def close_position(self, token_mint: str, reason: str, proceeds_sol: float = None):
+        """
+        proceeds_sol: actual SOL received from a live sell (wallet delta).
+        When omitted (paper mode), proceeds are derived from the PnL percentage.
+        """
         pos = self.positions.get(token_mint)
         if pos:
             pos.close(reason)
-            self.balance_sol += (pos.amount_sol + pos.realized_pnl_sol)
+            if proceeds_sol is not None:
+                pos.realized_pnl_sol = proceeds_sol - pos.amount_sol
+                proceeds = proceeds_sol
+            else:
+                proceeds = pos.amount_sol + pos.realized_pnl_sol
+            self.balance_sol += proceeds
 
             if config.AUTO_CLOSE_ATA_RENT:
                 self.recovered_rent_sol += 0.00204

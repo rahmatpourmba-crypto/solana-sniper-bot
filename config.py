@@ -31,9 +31,15 @@ def _load_dotenv(path: str = None) -> None:
 _load_dotenv()
 
 # --- MODE SELECTION ---
-SIMULATION_MODE = True                      # Paper trading: no real funds are ever used
+def _flag(name: str, default: str) -> bool:
+    return os.getenv(name, default).strip().lower() in ("1", "true", "yes", "on")
+
+
+SIMULATION_MODE = _flag("SIMULATION_MODE", "true")   # Paper trading: no real funds are ever used
 # Mock token stream is only allowed in simulation mode; never mixed into live feeds.
 ALLOW_SIMULATED_STREAM = SIMULATION_MODE
+# SAFETY: when live, dry-run builds & signs transactions but never broadcasts them.
+LIVE_DRY_RUN = _flag("LIVE_DRY_RUN", "true")
 
 # --- STRATEGY & SHARIA COMPLIANCE ---
 STRATEGY_MODE = "HALAL_UTILITY_AI"
@@ -50,7 +56,7 @@ PERMITTED_SECTORS = [
 
 # --- CAPITAL SETTINGS ---
 INITIAL_SIM_SOL = 2.0
-BUY_AMOUNT_SOL = 0.0035
+BUY_AMOUNT_SOL = 0.0035                     # entry size per trade (min ~0.0025 SOL live: fee+rent)
 MAX_ACTIVE_POSITIONS = 3
 MIN_SOL_RESERVE = 0.006
 
@@ -63,9 +69,20 @@ ENABLE_TRAILING_STOP = True
 TRAILING_STOP_PERCENT = 18.0                # trail 18% below the peak
 TIER1_TP = 40.0                             # trailing stop arms after +40%
 BREAKEVEN_TRIGGER_PERCENT = 100.0           # lock breakeven after 2x
+LOCKED_PROFIT_FLOOR_PERCENT = 50.0          # once locked, exit if profit falls to +50%
 MOONSHOT_TP = 2000.0                        # exit at +2000% (20x)
 STOP_LOSS_INITIAL = 12.0                    # fast exit at -12%
 MAX_HOLD_SECONDS = 240                      # stagnant exit after 4 minutes
+
+# --- LIVE TRADING (Jupiter Swap API + Solana RPC) ---
+JUPITER_BASE = os.getenv("JUPITER_BASE_URL", "https://lite-api.jup.ag/swap/v1")
+SLIPPAGE_BPS = int(os.getenv("SLIPPAGE_BPS", "300"))
+MAX_PRICE_IMPACT_PCT = 0.03                 # skip entries with >3% price impact
+CONFIRM_TIMEOUT_SECONDS = 45
+DAILY_LOSS_LIMIT_SOL = 0.02                 # kill switch: halt new entries after this daily loss
+SELL_RETRY_LIMIT = 3
+ATA_RENT_SOL = 0.00204                      # rent for a new token account (reclaimed on close)
+TX_FEE_SOL = 0.000005                       # one signature fee
 
 # --- ON-CHAIN INTEGRITY (real data, checked via RugCheck + DexScreener) ---
 MAX_TOP5_HOLDERS = 16.0
