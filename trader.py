@@ -61,9 +61,9 @@ class TradePosition:
             if drop_from_peak >= config.TRAILING_STOP_PERCENT:
                 return True, f"🎯 TRAILING STOP LOCKED PROFIT ({self.multiplier:.1f}x / +{pnl:.0f}%) [Peak: {self.peak_multiplier:.1f}x]"
 
-        # 3. حد ضرر اولیه (اگر توکن از اول رشد نکرد و ریخت)
+        # 3. حد ضرر اولیه هوشمند و فشرده (جلوگیری از ضرر بیش از ۱۲٪)
         if pnl <= -config.STOP_LOSS_INITIAL:
-            return True, f"🛑 Stop Loss ({pnl:.1f}%)"
+            return True, f"🛑 Tight Stop-Loss Saved Capital ({pnl:.1f}%)"
 
         # 4. نگهداری حداکثر ۵ دقیقه در صورت راکد ماندن
         if (time.time() - self.entry_time) > 300 and pnl < 20.0:

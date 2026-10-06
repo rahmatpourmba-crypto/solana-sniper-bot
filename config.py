@@ -1,40 +1,40 @@
 """
 Configuration module for Solana Moonshot Sniper Bot & Simulation Engine.
-Supports Micro-Budget trades (down to $0.50 / 0.0035 SOL) with direct Phantom Wallet settlement.
+Upgraded with Anti-Loss Guard, Buyer Momentum Verification, and Tight Stop-Loss.
 """
 import os
 
 # --- MODE SELECTION ---
-# True = حالت تستی (آزمایشی شبیه‌ساز)
-# False = حالت ترید واقعی با کیف‌پول فانتوم
 SIMULATION_MODE = True
 
-# --- MICRO-CAPITAL SETTINGS (معامله با مبالغ خرد) ---
-INITIAL_SIM_SOL = 2.0                 # موجودی شبیه‌ساز فعلی
-BUY_AMOUNT_SOL = 0.0035               # معادل نیم دلار ($0.50) برای شروع مایکرو
-MIN_WALLET_RESERVE_SOL = 0.005        # ذخیره حداقلی در ولت برای کارمزدها
+# --- MICRO-CAPITAL SETTINGS ---
+INITIAL_SIM_SOL = 2.0
+BUY_AMOUNT_SOL = 0.0035               # نیم دلار ($0.50) برای هر ورود
+MIN_WALLET_RESERVE_SOL = 0.005
 
-# --- PHANTOM WALLET (برای فاز اجرای واقعی هفته آینده) ---
-# در حالت واقعی، کلید خصوصی یک ولت تستی فانتوم اینجا قرار می‌گیرد
+# --- PHANTOM WALLET ---
 PHANTOM_PRIVATE_KEY = os.getenv("PHANTOM_PRIVATE_KEY", "")
+AUTO_CLOSE_EMPTY_ACCOUNTS = True
 
-# --- ATA RENT RECOVERY (بازگرداندن خودکار وثیقه شبکه به فانتوم) ---
-AUTO_CLOSE_EMPTY_ACCOUNTS = True      # پس از فروش توکن، وثیقه شبکه به کیف‌پول بازمی‌گردد
+# --- ANTI-LOSS PROTECTION (سپر دفاعی ضدضرر جدید) ---
+MIN_GEM_SCORE = 88.0                  # افزایش حداقل نمره کیفی جم از ۸۰ به ۸۸
+REQUIRE_BUYER_MOMENTUM = True         # الزام وجود حداقل چند خریدار اولیه مستقل
+MAX_TOP5_HOLDERS_PERCENT = 18.0       # حداکثر سهم ۵ هولدر برتر زیر ۱۸٪
+STOP_LOSS_INITIAL = 12.0              # سفت کردن حد ضرر اولیه از ۲۵٪- به ۱۲٪- (کاهش چشمگیر ضرر)
 
 # --- MOONSHOT TARGETS & EXIT STRATEGY ---
-ENABLE_TRAILING_STOP = True           # حد ضرر متحرک از سقف
-TRAILING_STOP_PERCENT = 20.0          # خروج در ۲۰٪ ریزش از قله
-TIER1_TP = 100.0                      # ۲ برابر (برداشت اصل پول)
+ENABLE_TRAILING_STOP = True
+TRAILING_STOP_PERCENT = 18.0          # خروج هوشمند در ۱۸٪ افت از قله
+TIER1_TP = 100.0                      # ۲ برابر (ریسک‌فری)
 TIER2_TP = 500.0                      # ۵ برابر
 MOONSHOT_TP = 2000.0                  # ۲۰ برابر (۲۰۰۰٪)
-STOP_LOSS_INITIAL = 25.0              # حد ضرر اولیه
 
-# --- GEM CRITERIA (فیلترهای شناسایی جم‌های امن) ---
-REQUIRE_SOCIALS = True                # داشتن توییتر/تلگرام
-MAX_DEV_HOLDING = 8.0                 # سهم سازنده زیر ۸٪
-MIN_LIQUIDITY_USD = 1500.0            # حداقل نقدینگی
+# --- GEM CRITERIA ---
+REQUIRE_SOCIALS = True
+MAX_DEV_HOLDING = 6.0                 # کاهش حداکثر سهم سازنده از ۸٪ به ۶٪ (امنیت بیشتر)
+MIN_LIQUIDITY_USD = 2000.0
 
-# --- TELEGRAM ALERTS (کانال شما) ---
+# --- TELEGRAM ALERTS ---
 TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN", "8886497499:AAH1crLMaaDDVhbrSPvTCVfhlJWQGKB9pno")
 TELEGRAM_CHAT_ID = os.getenv("TELEGRAM_CHAT_ID", "-1003954902967")
 
