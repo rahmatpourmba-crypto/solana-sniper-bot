@@ -7,9 +7,6 @@ on:
         description: 'Duration to run the bot (in minutes)'
         required: true
         default: '30'
-  schedule:
-    # Run periodically every 6 hours automatically
-    - cron: '0 */6 * * *'
 
 jobs:
   run-sniper:
@@ -31,6 +28,18 @@ jobs:
           pip install -r requirements.txt
 
       - name: Run Solana Sniper Bot
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          HTTP_PROXY: ""
         run: |
-          # Run bot with timeout
-          timeout ${{ github.event.inputs.duration_minutes || 30 }}m python bot.py || true
+          set -o pipefail
+          timeout ${{ github.event.inputs.duration_minutes || 30 }}m python bot.py 2>&1 | tee bot_run.log || true
+
+      - name: Upload Run Log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: bot-run-log
+          path: bot_run.log
+          retention-days: 14

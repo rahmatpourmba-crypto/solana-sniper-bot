@@ -6,3 +6,6 @@ __pycache__/
 venv/
 .vscode/
 .idea/
+*.log
+out.txt
+err.txt

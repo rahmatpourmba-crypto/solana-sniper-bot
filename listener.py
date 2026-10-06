@@ -1,87 +1,123 @@
 """
-Smart Token Listener with Dual Mode:
-1. Live Mode: Connects to Solana / DexScreener when internet/proxy is available.
-2. High-Fidelity Market Simulation: Emulates realistic Solana new pool launches & bonding curves
-   so testing and development never stall even during network outages.
+Smart Token Listener with two clearly separated modes:
+1. Live Mode: real token mints from DexScreener (no fabricated data).
+2. Demo Mode: an explicitly labelled simulated stream, only enabled when
+   config.ALLOW_SIMULATED_STREAM is True (i.e. paper-trading / simulation).
 """
 import asyncio
-import aiohttp
 import random
-import time
-from typing import Callable, Awaitable, Set
+from typing import Awaitable, Callable, Optional, Set
+
+import aiohttp
+
 import config
 
 SAMPLE_SYMBOLS = [
-    ("PEPE2026", "Pepe Millennium"),
-    ("SOLCAT", "Solana Super Cat"),
     ("MOONAI", "Moon AI Agent"),
-    ("DOGEX", "Doge Matrix"),
     ("NEURA", "Neural Network"),
-    ("PUMPIT", "Pump Protocol"),
-    ("TURBO", "Turbo Speed Meme"),
-    ("CYBER", "Cyber Samurai"),
-    ("QUANT", "Quantum Finance"),
-    ("SHIBAZ", "Shiba Zero")
+    ("GPUX", "GPU Compute Network"),
+    ("ORACLD", "Oracle Data Stream"),
+    ("CYBR", "Cyber Security Shield"),
+    ("DEPIND", "DePIN Bandwidth"),
+    ("RNDRC", "Render Compute"),
+    ("NODEX", "Node Infrastructure"),
+    ("AETHER", "Aether AI Layer"),
+    ("QUANTS", "Quant Data Index"),
 ]
 
+
 class TokenListener:
-    def __init__(self, on_new_token: Callable[[dict], Awaitable[None]]):
+    def __init__(
+        self,
+        on_new_token: Callable[[dict], Awaitable[None]],
+        on_status: Optional[Callable[[str, str], Awaitable[None]]] = None,
+    ):
         self.on_new_token = on_new_token
+        self.on_status = on_status or (lambda level, msg: None)
         self.is_running = False
         self.seen_tokens: Set[str] = set()
+        self._tasks: Set[asyncio.Task] = set()
+
+    def _spawn(self, coro) -> None:
+        task = asyncio.create_task(coro)
+        self._tasks.add(task)
+        task.add_done_callback(self._tasks.discard)
 
     async def fetch_live_tokens(self, session: aiohttp.ClientSession) -> bool:
-        """تلاش برای دریافت توکن‌های زنده از اینترنت"""
+        """Fetch real, newly-profiled Solana tokens from DexScreener."""
         try:
-            proxy = config.HTTP_PROXY if config.HTTP_PROXY else None
-            async with session.get(config.DEXSCREENER_LATEST, proxy=proxy, timeout=aiohttp.ClientTimeout(total=4)) as resp:
-                if resp.status == 200:
-                    tokens = await resp.json()
-                    sol_tokens = [t for t in tokens if t.get("chainId") == "solana"]
-                    for t in sol_tokens:
-                        mint = t.get("tokenAddress")
-                        if mint and mint not in self.seen_tokens:
-                            self.seen_tokens.add(mint)
-                            token_info = {
-                                "mint": mint,
-                                "name": t.get("name", "Unknown"),
-                                "symbol": t.get("symbol", "N/A"),
-                                "is_simulated_stream": False
-                            }
-                            asyncio.create_task(self.on_new_token(token_info))
-                    return True
+            async with session.get(
+                config.DEXSCREENER_LATEST, proxy=config.HTTP_PROXY
+            ) as resp:
+                if resp.status != 200:
+                    return False
+                tokens = await resp.json()
+                found = False
+                for t in tokens:
+                    if t.get("chainId") != "solana":
+                        continue
+                    mint = t.get("tokenAddress")
+                    if not mint or mint in self.seen_tokens:
+                        continue
+                    found = True
+                    if len(self.seen_tokens) > 20000:
+                        self.seen_tokens.clear()
+                    self.seen_tokens.add(mint)
+                    token_info = {
+                        "mint": mint,
+                        "name": t.get("name"),
+                        "symbol": t.get("symbol"),
+                        "description": t.get("description") or "",
+                        "is_simulated_stream": False,
+                    }
+                    self._spawn(self.on_new_token(token_info))
+                return found
         except Exception:
             return False
         return False
 
+    async def emit_demo_token(self) -> None:
+        """Emit one clearly-marked simulated token (demo data only)."""
+        await asyncio.sleep(random.uniform(2.5, 5.0))
+        sym, name = random.choice(SAMPLE_SYMBOLS)
+        alphabet = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz"
+        mock_mint = "".join(random.choices(alphabet, k=32))[:8] + "pump"
+        token_info = {
+            "mint": mock_mint,
+            "name": name,
+            "symbol": sym,
+            "price_usd": round(random.uniform(0.005, 0.08), 6),
+            "is_simulated_stream": True,
+        }
+        self._spawn(self.on_new_token(token_info))
+
     async def start(self):
         self.is_running = True
-        timeout = aiohttp.ClientTimeout(total=4)
+        timeout = aiohttp.ClientTimeout(total=5)
         headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"}
+        was_live: Optional[bool] = None
 
         async with aiohttp.ClientSession(timeout=timeout, headers=headers) as session:
             while self.is_running:
-                # 1. تلاش اول: بررسی اتصال زنده
-                live_success = await self.fetch_live_tokens(session)
+                live_ok = await self.fetch_live_tokens(session)
 
-                # 2. اگر اینترنت فیلتر یا قطع بود: شبیه‌ساز جریان بازار زنده (Live Flow Emulator)
-                if not live_success:
-                    # تولید رویداد جدید هر ۳ الی ۶ ثانیه دقیقاً مشابه سرعت واقعی پامپ‌فان
-                    await asyncio.sleep(random.uniform(2.5, 5.0))
-                    sym, name = random.choice(SAMPLE_SYMBOLS)
-                    random_hex = "".join(random.choices("123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz", k=32))
-                    mock_mint = f"{random_hex[:8]}pump"
+                if live_ok != was_live:
+                    was_live = live_ok
+                    if live_ok:
+                        await self.on_status("green", "فید زنده DexScreener متصل شد — توکن‌های واقعی دریافت می‌شود")
+                    elif config.ALLOW_SIMULATED_STREAM:
+                        await self.on_status("yellow", "فید زنده در دسترس نیست — استریم شبیه‌سازی‌شده [دمو] فعال شد")
+                    else:
+                        await self.on_status("red", "فید زنده در دسترس نیست و استریم شبیه‌سازی غیرفعال است — انتظار...")
 
-                    token_info = {
-                        "mint": mock_mint,
-                        "name": name,
-                        "symbol": sym,
-                        "v_sol_in_bonding_curve": random.uniform(28.0, 45.0),
-                        "is_simulated_stream": True
-                    }
-                    asyncio.create_task(self.on_new_token(token_info))
-                else:
+                if live_ok:
                     await asyncio.sleep(3)
+                elif config.ALLOW_SIMULATED_STREAM:
+                    await self.emit_demo_token()
+                else:
+                    await asyncio.sleep(5)
 
     def stop(self):
         self.is_running = False
+        for task in list(self._tasks):
+            task.cancel()
