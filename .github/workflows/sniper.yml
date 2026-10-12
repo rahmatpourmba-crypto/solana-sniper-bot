@@ -1,12 +1,17 @@
 name: Solana Sniper & Simulator Runner
 
 on:
+  schedule:
+    # اجرا خودکار هر ۱ ساعت یکبار به‌صورت ۲۴/۷
+    - cron: '0 * * * *'
+  push:
+    branches: [ master ]
   workflow_dispatch:
     inputs:
       duration_minutes:
         description: 'Duration to run the bot (in minutes)'
         required: true
-        default: '30'
+        default: '50'
 
 jobs:
   run-sniper:
