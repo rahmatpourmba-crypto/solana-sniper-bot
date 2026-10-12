@@ -22,7 +22,8 @@ class TelegramNotifier:
         return self.session
 
     async def send_message(self, text: str) -> bool:
-        if not self.enabled:
+        # تا واقعی شدن معاملات (خروج از حالت شبیه‌ساز)، ارسال پیام به تلگرام قطع باشد
+        if not self.enabled or config.SIMULATION_MODE:
             return False
 
         url = f"https://api.telegram.org/bot{self.bot_token}/sendMessage"
