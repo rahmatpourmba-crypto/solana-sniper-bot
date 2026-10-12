@@ -58,7 +58,7 @@ EXCLUDE_HARAM_CONTENT = True           # ✅ فیلتر شرعی کامل فعا
 # [تکنیک ۹ — Dynamic Variables] سرمایه‌گذاری: از نیم‌دلار شروع می‌شود
 # ═══════════════════════════════════════════════════════════════
 INITIAL_SIM_SOL      = 2.0
-BUY_AMOUNT_SOL       = float(os.getenv("BUY_AMOUNT_SOL", "0.0035"))   # ~0.5$ = مناسب نیم‌دلار
+BUY_AMOUNT_SOL       = float(os.getenv("BUY_AMOUNT_SOL", "0.001"))    # ~0.15$ تا 0.20$ (10 تا 20 سنت)
 MAX_ACTIVE_POSITIONS = int(os.getenv("MAX_ACTIVE_POSITIONS", "3"))
 MIN_SOL_RESERVE      = 0.006          # حداقل ذخیره برای فی‌های تراکنش
 
