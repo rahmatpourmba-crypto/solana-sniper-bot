@@ -1,10 +1,15 @@
 """
-Halal Tech & AI Utility Sniper Bot for Solana.
-Audited for Islamic Financial Principles:
-- Excludes gambling, betting, and hollow memes.
-- Targets real AI Agents, DePIN GPU, and Tech Infrastructure.
-- Paper trading engine with real market prices (DexScreener) and a
-  clearly-labelled demo stream when live data is unavailable.
+🕌 HALAL MEME SNIPER — Solana Pump.fun Sniper Bot (Mega-Prompt Edition)
+═══════════════════════════════════════════════════════════════════════
+[تکنیک ۱ — Expert Anchoring] ربات شکارچی میم‌کوین با سرعت میلی‌ثانیه‌ای
+[تکنیک ۶ — Negative Constraints] بدون قمار، ربا، محتوای نامناسب
+[تکنیک ۲۰ — Contingency Branching] خروج ۳ مرحله‌ای: StopLoss → Trailing → Moonshot
+
+استراتژی: HALAL_MEME_SNIPER
+- هدف: رشد ۲۰۰۰٪ در پامپ‌دات‌فان
+- سرمایه اولیه: از نیم‌دلار قابل شروع
+- فیلتر شرعی: ۸ لایه بررسی واقعی
+- داده: DexScreener + RugCheck API (بدون هیچ عدد ساختگی)
 """
 import sys
 
@@ -257,7 +262,7 @@ class HalalTechSniperBot:
     def generate_dashboard(self) -> Panel:
         mode = "PAPER TRADING" if config.SIMULATION_MODE else ("LIVE • DRY-RUN" if config.LIVE_DRY_RUN else "LIVE")
         summary_text = (
-            f"Strategy: [bold magenta]HALAL TECH & AI UTILITY[/bold magenta] | "
+            f"Strategy: [bold magenta]🕌 HALAL MEME SNIPER[/bold magenta] | "
             f"Mode: [bold]{mode}[/bold] | "
             f"Balance: [bold]{self.trader.balance_sol:.3f} SOL[/bold] | "
             f"PnL: [bold green]{self.trader.total_pnl_sol:+.4f} SOL[/bold green] | "
@@ -265,7 +270,7 @@ class HalalTechSniperBot:
             f"Recovered Rent: +{self.trader.recovered_rent_sol:.4f} SOL"
         )
 
-        pos_table = Table(title="💎 Active Halal Tech Positions", expand=True)
+        pos_table = Table(title="🐸 Active Halal Meme Positions", expand=True)
         pos_table.add_column("Symbol", style="cyan")
         pos_table.add_column("Mint", style="dim")
         pos_table.add_column("Source", justify="center")
@@ -275,7 +280,7 @@ class HalalTechSniperBot:
         pos_table.add_column("Breakeven Guard", justify="center")
 
         if not self.trader.positions:
-            pos_table.add_row("-", "Scanning verified AI & DePIN utility projects...", "-", "-", "-", "-", "-")
+            pos_table.add_row("-", "🔎 Scanning pump.fun for halal meme gems...", "-", "-", "-", "-", "-")
         else:
             for mint, pos in self.trader.positions.items():
                 pnl = pos.current_pnl_percent
@@ -292,21 +297,22 @@ class HalalTechSniperBot:
                     be_status,
                 )
 
-        logs_panel = Panel("\n".join(self.logs) if self.logs else "Connecting...", title="📡 Halal Tech Radar Stream")
+        logs_panel = Panel("\n".join(self.logs) if self.logs else "Connecting...", title="📡 Halal Meme Radar | pump.fun Stream")
 
         content_table = Table.grid(expand=True)
         content_table.add_row(Panel(summary_text, style="blue"))
         content_table.add_row(pos_table)
         content_table.add_row(logs_panel)
 
-        return Panel(content_table, title="🕌 [bold green]HALAL TECH & AI SOLANA SNIPER[/bold green] 🕌", border_style="green")
+        return Panel(content_table, title="🕌 [bold green]HALAL MEME SNIPER — SOLANA[/bold green] 🚀", border_style="green")
+
 
     async def run(self):
         self.session = aiohttp.ClientSession(timeout=aiohttp.ClientTimeout(total=6), trust_env=True)
 
         mode = "PAPER TRADING" if config.SIMULATION_MODE else ("LIVE (DRY-RUN)" if config.LIVE_DRY_RUN else "LIVE")
-        self.log("🚀 Initializing Halal Tech & AI Utility Sniper Engine...", "green")
-        self.log(f"🧭 Mode: {mode} | Entry per gem: {config.BUY_AMOUNT_SOL} SOL | Balance: {self.trader.balance_sol} SOL", "cyan")
+        self.log("🚀 HALAL MEME SNIPER در حال راه‌اندازی...", "green")
+        self.log(f"🧭 Mode: {mode} | ورودی هر موقعیت: {config.BUY_AMOUNT_SOL} SOL | موجودی: {self.trader.balance_sol} SOL", "cyan")
 
         if not config.SIMULATION_MODE:
             kp, is_ephemeral = wallet.load_or_ephemeral()
@@ -327,7 +333,7 @@ class HalalTechSniperBot:
                 self.log(f"⚠️ خواندن موجودی کیف پول ناموفق: {exc}", "yellow")
             self._refresh_day()
 
-        self.log("🕌 Sharia Compliance Filter: Pure Utility, AI & DePIN. No Gambling, No Parody.", "magenta")
+        self.log("🕌 فیلتر شرعی: میم‌کوین حلال ✅ | بدون قمار، ربا، محتوای نامناسب ❌", "magenta")
         if config.ALLOW_SIMULATED_STREAM:
             self.log("⚠️ Demo stream enabled: simulated tokens are always tagged [دمو] and never mixed with live data.", "yellow")
 

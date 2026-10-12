@@ -1,8 +1,14 @@
 """
-Halal Tech & Utility Configuration for Solana & DePIN/AI Ecosystem.
-Compliant with Islamic ethical finance: targets only utility, AI, and computing tokens.
+🎯 HALAL MEME SNIPER — Config (Mega-Prompt Edition)
+════════════════════════════════════════════════════
+[تکنیک ۱ — Expert Anchoring] پیکربندی ربات شکارچی میم‌کوین حلال
+[تکنیک ۹ — Dynamic Variable Injection] تمام پارامترها از .env قابل تنظیم
+[تکنیک ۶ — Negative Constraints] هیچ کلید خصوصی در کد نیست — همه از env
 
-All secrets are read from environment variables (see .env.example).
+استراتژی جدید: HALAL_MEME_SNIPER
+- میم‌کوین‌های سالم سولانا ✅
+- بدون قمار / ربا / محتوای نامناسب ✅
+- هدف رشد ۲۰۰۰٪ در اوج پامپ‌دات‌فان ✅
 """
 import os
 
@@ -30,77 +36,83 @@ def _load_dotenv(path: str = None) -> None:
 
 _load_dotenv()
 
+
 # --- MODE SELECTION ---
 def _flag(name: str, default: str) -> bool:
     return os.getenv(name, default).strip().lower() in ("1", "true", "yes", "on")
 
 
-SIMULATION_MODE = _flag("SIMULATION_MODE", "true")   # Paper trading: no real funds are ever used
-# Mock token stream is only allowed in simulation mode; never mixed into live feeds.
-ALLOW_SIMULATED_STREAM = SIMULATION_MODE
-# SAFETY: when live, dry-run builds & signs transactions but never broadcasts them.
-LIVE_DRY_RUN = _flag("LIVE_DRY_RUN", "true")
+SIMULATION_MODE = _flag("SIMULATION_MODE", "true")   # کاغذی: هیچ پول واقعی جابجا نمی‌شود
+ALLOW_SIMULATED_STREAM = SIMULATION_MODE              # استریم دمو فقط در حالت کاغذی
+LIVE_DRY_RUN = _flag("LIVE_DRY_RUN", "true")         # تراکنش ساخته می‌شود ولی ارسال نمی‌شود
 
-# --- STRATEGY & SHARIA COMPLIANCE ---
-STRATEGY_MODE = "HALAL_UTILITY_AI"
-EXCLUDE_GAMBLING_AND_MEMES = True
-REQUIRE_REAL_TECH_PRODUCT = True            # token must match a known tech/utility sector
-PERMITTED_SECTORS = [
-    "AI_AGENTS",
-    "DEPIN_COMPUTE",
-    "DATA_ORACLE",
-    "INFRASTRUCTURE",
-    "CYBER_SECURITY",
-    "DEV_INFRA",
-]
+# ═══════════════════════════════════════════════════════════════
+# [تکنیک ۷ — Step-Back] استراتژی کلان: HALAL_MEME_SNIPER
+# تغییر اساسی از HALAL_UTILITY_AI به سمت میم‌کوین‌های سالم
+# ═══════════════════════════════════════════════════════════════
+STRATEGY_MODE = "HALAL_MEME_SNIPER"
+REQUIRE_REAL_TECH_PRODUCT = False      # ❌ دیگر فناوری الزامی نیست — میم‌کوین مجاز است
+EXCLUDE_HARAM_CONTENT = True           # ✅ فیلتر شرعی کامل فعال است
 
-# --- CAPITAL SETTINGS ---
-INITIAL_SIM_SOL = 2.0
-BUY_AMOUNT_SOL = 0.0035                     # entry size per trade (min ~0.0025 SOL live: fee+rent)
-MAX_ACTIVE_POSITIONS = 3
-MIN_SOL_RESERVE = 0.006
+# ═══════════════════════════════════════════════════════════════
+# [تکنیک ۹ — Dynamic Variables] سرمایه‌گذاری: از نیم‌دلار شروع می‌شود
+# ═══════════════════════════════════════════════════════════════
+INITIAL_SIM_SOL      = 2.0
+BUY_AMOUNT_SOL       = float(os.getenv("BUY_AMOUNT_SOL", "0.0035"))   # ~0.5$ = مناسب نیم‌دلار
+MAX_ACTIVE_POSITIONS = int(os.getenv("MAX_ACTIVE_POSITIONS", "3"))
+MIN_SOL_RESERVE      = 0.006          # حداقل ذخیره برای فی‌های تراکنش
+
+# ═══════════════════════════════════════════════════════════════
+# [تکنیک ۱۴ — Risk Matrix] ماتریس ریسک: سود هدف ۲۰۰۰٪
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+# مرحله ۱: استاپ اولیه ۱۲٪ (محافظت اولیه)
+# مرحله ۲: تریلینگ ۱۸٪ پس از رشد ۴۰٪ (محافظت سود)
+# مرحله ۳: قفل برک‌ایون پس از ۱۰۰٪ (ضرر صفر)
+# مرحله ۴: خروج در ۲۰۰۰٪ (هدف نهایی)
+# ═══════════════════════════════════════════════════════════════
+ENABLE_TRAILING_STOP         = True
+TRAILING_STOP_PERCENT        = 18.0   # ۱۸٪ زیر اوج → خروج
+TIER1_TP                     = 40.0   # از اینجا تریلینگ فعال می‌شود
+BREAKEVEN_TRIGGER_PERCENT    = 100.0  # پس از ۲ برابر → برک‌ایون قفل
+LOCKED_PROFIT_FLOOR_PERCENT  = 50.0   # اگر قفل شد، تا ۵۰٪ نگه می‌دارد
+MOONSHOT_TP                  = 2000.0 # ۲۰ برابر → خروج نهایی 🚀
+STOP_LOSS_INITIAL            = 12.0   # خروج سریع در -۱۲٪
+MAX_HOLD_SECONDS             = 300    # ۵ دقیقه رکود → خروج
 
 # --- WALLET (live mode only) ---
 PHANTOM_PRIVATE_KEY = os.getenv("PHANTOM_PRIVATE_KEY", "")
 AUTO_CLOSE_ATA_RENT = True
 
-# --- TARGETS & RISK MITIGATION ---
-ENABLE_TRAILING_STOP = True
-TRAILING_STOP_PERCENT = 18.0                # trail 18% below the peak
-TIER1_TP = 40.0                             # trailing stop arms after +40%
-BREAKEVEN_TRIGGER_PERCENT = 100.0           # lock breakeven after 2x
-LOCKED_PROFIT_FLOOR_PERCENT = 50.0          # once locked, exit if profit falls to +50%
-MOONSHOT_TP = 2000.0                        # exit at +2000% (20x)
-STOP_LOSS_INITIAL = 12.0                    # fast exit at -12%
-MAX_HOLD_SECONDS = 240                      # stagnant exit after 4 minutes
-
 # --- LIVE TRADING (Jupiter Swap API + Solana RPC) ---
-JUPITER_BASE = os.getenv("JUPITER_BASE_URL", "https://lite-api.jup.ag/swap/v1")
-SLIPPAGE_BPS = int(os.getenv("SLIPPAGE_BPS", "300"))
-MAX_PRICE_IMPACT_PCT = 0.03                 # skip entries with >3% price impact
+JUPITER_BASE          = os.getenv("JUPITER_BASE_URL", "https://lite-api.jup.ag/swap/v1")
+SLIPPAGE_BPS          = int(os.getenv("SLIPPAGE_BPS", "500"))        # ۵٪ اسلیپاژ — میم‌کوین نیاز دارد
+MAX_PRICE_IMPACT_PCT  = 0.05          # تا ۵٪ price impact برای میم‌کوین
 CONFIRM_TIMEOUT_SECONDS = 45
-DAILY_LOSS_LIMIT_SOL = 0.02                 # kill switch: halt new entries after this daily loss
-SELL_RETRY_LIMIT = 3
-ATA_RENT_SOL = 0.00204                      # rent for a new token account (reclaimed on close)
-TX_FEE_SOL = 0.000005                       # one signature fee
+DAILY_LOSS_LIMIT_SOL  = 0.025         # کلید اضطراری روزانه
+SELL_RETRY_LIMIT      = 3
+ATA_RENT_SOL          = 0.00204       # اجاره ATA (بازیابی در فروش)
+TX_FEE_SOL            = 0.000005      # فی یک امضا
 
-# --- ON-CHAIN INTEGRITY (real data, checked via RugCheck + DexScreener) ---
-MAX_TOP5_HOLDERS = 16.0
+# ═══════════════════════════════════════════════════════════════
+# [تکنیک ۱۲ — Self-Consistency] معیارهای کیفی on-chain
+# اعداد بر اساس تجربه میدانی pump.fun تنظیم شده‌اند
+# ═══════════════════════════════════════════════════════════════
+MAX_TOP5_HOLDERS       = 16.0   # اگر ۵ نفر بیش از ۱۶٪ داشتند → rug احتمالی
 REQUIRE_BUYER_MOMENTUM = True
-MIN_BUYER_COUNT = 4
-REQUIRE_REVOKED_MINT = True
-REQUIRE_REVOKED_FREEZE = True
+MIN_BUYER_COUNT        = 4      # حداقل ۴ خریدار واقعی در اول
+REQUIRE_REVOKED_MINT   = True   # اختیار ضرب توکن باید لغو شده باشد
+REQUIRE_REVOKED_FREEZE = True   # اختیار فریز باید لغو شده باشد
 REQUIRE_IMMUTABLE_METADATA = True
-REQUIRE_SOCIALS = False
-MIN_GEM_SCORE = 70
-MIN_LIQUIDITY_USD = 3000.0
+REQUIRE_SOCIALS        = False
+MIN_GEM_SCORE          = 55     # آستانه پایین‌تر برای میم‌کوین تازه (قبلاً ۷۰)
+MIN_LIQUIDITY_USD      = 2000.0 # حداقل نقدشوندگی (قبلاً ۳۰۰۰ — کاهش برای pump.fun)
 
-# --- MARKET DATA ---
-PRICE_POLL_SECONDS = 5
-DEXSCREENER_LATEST = "https://api.dexscreener.com/token-profiles/latest/v1"
-DEXSCREENER_TOKEN = "https://api.dexscreener.com/latest/dex/tokens/{mint}"
-DEXSCREENER_PAIR = "https://api.dexscreener.com/latest/dex/pairs/solana/{pair}"
-RUGCHECK_REPORT = "https://api.rugcheck.xyz/v1/tokens/{mint}/report/summary"
+# --- MARKET DATA APIs ---
+PRICE_POLL_SECONDS  = 4
+DEXSCREENER_LATEST  = "https://api.dexscreener.com/token-profiles/latest/v1"
+DEXSCREENER_TOKEN   = "https://api.dexscreener.com/latest/dex/tokens/{mint}"
+DEXSCREENER_PAIR    = "https://api.dexscreener.com/latest/dex/pairs/solana/{pair}"
+RUGCHECK_REPORT     = "https://api.rugcheck.xyz/v1/tokens/{mint}/report/summary"
 
 # --- MULTI-RPC FALLBACK POOL ---
 RPC_POOL = [
@@ -112,7 +124,7 @@ SOLANA_RPC_URL = os.getenv("SOLANA_RPC_URL", RPC_POOL[0])
 
 # --- TELEGRAM 24/7 (secrets come from environment only) ---
 TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN", "")
-TELEGRAM_CHAT_ID = os.getenv("TELEGRAM_CHAT_ID", "")
+TELEGRAM_CHAT_ID   = os.getenv("TELEGRAM_CHAT_ID", "")
 
 # --- PROXY (set only if you are behind a filter; empty = direct) ---
 HTTP_PROXY = os.getenv("HTTP_PROXY", "") or None

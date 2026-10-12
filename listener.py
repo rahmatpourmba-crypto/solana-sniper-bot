@@ -1,8 +1,9 @@
 """
-Smart Token Listener with two clearly separated modes:
-1. Live Mode: real token mints from DexScreener (no fabricated data).
-2. Demo Mode: an explicitly labelled simulated stream, only enabled when
-   config.ALLOW_SIMULATED_STREAM is True (i.e. paper-trading / simulation).
+🐸 HALAL MEME SNIPER — Token Listener (Mega-Prompt Edition)
+══════════════════════════════════════════════════════════
+[تکنیک ۳ — Few-Shot Demo] نمونه‌های دمو از جنس میم‌کوین‌های واقعی
+[تکنیک ۲۱ — Iterative Refinement] اتصال اول به DexScreener زنده؛
+اگر قطع شد → استریم دمو با برچسب صریح [دمو]
 """
 import asyncio
 import random
@@ -12,17 +13,24 @@ import aiohttp
 
 import config
 
+# [تکنیک ۳ — Few-Shot] نمونه‌های واقعی میم‌کوین‌های حلال پامپ‌دات‌فان
+# (برای حالت دمو — داده شبیه‌سازی‌شده، نه واقعی)
 SAMPLE_SYMBOLS = [
-    ("MOONAI", "Moon AI Agent"),
-    ("NEURA", "Neural Network"),
-    ("GPUX", "GPU Compute Network"),
-    ("ORACLD", "Oracle Data Stream"),
-    ("CYBR", "Cyber Security Shield"),
-    ("DEPIND", "DePIN Bandwidth"),
-    ("RNDRC", "Render Compute"),
-    ("NODEX", "Node Infrastructure"),
-    ("AETHER", "Aether AI Layer"),
-    ("QUANTS", "Quant Data Index"),
+    ("CATDOG", "Cat Dog Sol"),
+    ("PEPESOL", "Pepe Solana"),
+    ("MOONSOL", "Moon Rocket Sol"),
+    ("BONKCAT", "Bonk Cat"),
+    ("GIGABULL", "Giga Bull Solana"),
+    ("FROGKING", "Frog King"),
+    ("SOLBEAR", "Sol Bear Moon"),
+    ("DOGESOL", "Doge Solana"),
+    ("CHADMOON", "Based Chad Moon"),
+    ("WOLFPACK", "Wolf Pack Sol"),
+    ("BABYPEPE", "Baby Pepe Sol"),
+    ("ROCKETSOL", "Rocket Sol Meme"),
+    ("LIONKING", "Lion King Solana"),
+    ("APEKONG", "Ape Kong Sol"),
+    ("MINIPEPE", "Mini Pepe Pump"),
 ]
 
 
