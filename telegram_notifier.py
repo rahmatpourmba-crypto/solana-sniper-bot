@@ -22,25 +22,7 @@ class TelegramNotifier:
         return self.session
 
     async def send_message(self, text: str) -> bool:
-        # تا واقعی شدن معاملات (خروج از حالت شبیه‌ساز)، ارسال پیام به تلگرام قطع باشد
-        if not self.enabled or config.SIMULATION_MODE:
-            return False
-
-        url = f"https://api.telegram.org/bot{self.bot_token}/sendMessage"
-        payload = {
-            "chat_id": self.chat_id,
-            "text": text,
-            "parse_mode": "HTML",
-            "disable_web_page_preview": True,
-        }
-
-        for attempt in range(2):
-            try:
-                async with self._get_session().post(url, json=payload, proxy=config.HTTP_PROXY) as resp:
-                    if resp.status == 200:
-                        return True
-            except Exception:
-                pass
+        # ارسال پیام به تلگرام کاملاً مسدود و غیرفعال است
         return False
 
     async def notify_buy(
